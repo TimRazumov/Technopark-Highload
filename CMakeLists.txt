@@ -8,9 +8,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(Boost_USE_STATIC_LIBS ON)
 
 find_package(Boost 1.65 REQUIRED
-    COMPONENTS system program_options thread filesystem coroutine)
+    COMPONENTS system program_options thread filesystem coroutine log log_setup)
 
-set(CMAKE_CXX_FLAGS "-W -Wall -Wextra -Werror -fPIC -pthread -fno-omit-frame-pointer -std=c++17 -ggdb -DBOOST_COROUTINES_NO_DEPRECATION_WARNING")
+set(CMAKE_CXX_FLAGS "-W -Wall -Wextra -Werror -fPIC -pthread -fno-omit-frame-pointer -std=c++17 -ggdb")
 
-include_directories(${CMAKE_BINARY_DIR})
 add_subdirectory(src)
