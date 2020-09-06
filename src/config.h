@@ -14,8 +14,8 @@ struct Settings
 {
 	explicit Settings(const std::string& configFileName) noexcept;
 
-	size_t port;
-	size_t numWorkerThreads;
+	short unsigned int port;
+	size_t workersCount;
 };
 
 }

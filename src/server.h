@@ -2,14 +2,22 @@
 
 #include "config.h"
 
-#include <boost/asio.hpp>
+#include <thread>
+#include <vector>
+
+#include <boost/asio/io_context.hpp>
 
 class StaticServer final
 {
 public:
 	explicit StaticServer(const config::Settings& settings_) noexcept;
-	int Run();
+	~StaticServer();
+
+	int Start();
+	void Stop();
 
 private:
-	config::Settings settings;
+	const config::Settings settings;
+	boost::asio::io_context ioContext;
+	std::vector<std::thread> workers;
 };

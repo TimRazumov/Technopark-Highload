@@ -74,8 +74,8 @@ config::Settings::Settings(const std::string& configFileName) noexcept
     std::string logLevel;
 
     desc.add_options()
-        ("port", po::value<size_t>(&port)->required(), "port on which the service is listening")
-        ("worker_threads", po::value<size_t>(&numWorkerThreads)->required(),"num worker threads")
+        ("port", po::value<short unsigned int>(&port)->required(), "port on which the service is listening")
+        ("workers_count", po::value<size_t>(&workersCount)->required(),"num worker threads")
         ("log_level", po::value<std::string>(&logLevel)->required(), "log level");
 
     po::variables_map vm;
