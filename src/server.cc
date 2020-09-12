@@ -8,9 +8,8 @@
 #include <boost/asio/write.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/spawn.hpp>
-
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/signal_set.hpp>
-#include <boost/bind.hpp>
 
 namespace
 {
@@ -19,7 +18,7 @@ class Session final : public std::enable_shared_from_this<Session>
 {
  public:
     Session(boost::asio::io_context &ioContext_, boost::asio::ip::tcp::socket &&socket_)
-        : strand(ioContext_.get_executor()), socket(std::move(socket_))
+        : strand(ioContext_.get_executor()), timer(ioContext_), socket(std::move(socket_))
     {
         boost::asio::socket_base::keep_alive option(true);
         socket.set_option(option);
@@ -30,7 +29,7 @@ class Session final : public std::enable_shared_from_this<Session>
         Stop();
     }
 
-	void Start(store::FileStore &fileStore) 
+	void Start(store::FileStore &fileStore, time_t sessionTimeoutMsec) 
 	{
         boost::system::error_code ec;
 		auto endpoint = socket.remote_endpoint(ec);
@@ -44,27 +43,37 @@ class Session final : public std::enable_shared_from_this<Session>
         BOOST_LOG_TRIVIAL(info) << "remote endpoint: " << remote;
 
         boost::asio::spawn(strand, 
-            [this, self = shared_from_this(), remote, &fileStore] (auto yield) 
+            [this, self = shared_from_this(), remote, sessionTimeoutMsec, &fileStore] (auto yield) 
             {
                 while (socket.is_open())
                 {
                     try
                     {
+                        timer.expires_from_now(std::chrono::milliseconds(sessionTimeoutMsec));
+                        timer.async_wait([this, self](auto ec) 
+                        {
+                            if (!ec)
+                            {
+                                boost::system::error_code ignored;
+                                socket.cancel(ignored);
+                            }
+                        });
+
                         boost::asio::streambuf buffer;
                         boost::asio::async_read_until(socket, buffer, network::httpEndl, yield);
                         network::Request req(std::move(buffer));
                         
-                        std::string path = utils::MakePathByUrl(req.GetUrlPath());
+                        std::string fullPath = fileStore.GetFullPath(utils::MakePathByUrl(req.GetUrlPath()));
                         network::Response resp;
                         if (req.GetMethod() == network::get || req.GetMethod() == network::head)
                         {
-                            auto [status, content, fileType] = fileStore.Get(path);
-                            BOOST_LOG_TRIVIAL(debug) << "get file with status: " << static_cast<size_t>(status) << ", type: " << fileType;
+                            auto [status, content] = fileStore.Get(fullPath);
+                            BOOST_LOG_TRIVIAL(debug) << "load file with status: " << static_cast<size_t>(status) << ", full path: " << fullPath;
                             switch (status)
                             {
                             case store::status::ok:
                             {
-                                resp = network::Response(network::status::ok, content, utils::GetContentType(fileType));
+                                resp = network::Response(network::status::ok, content, utils::GetContentType(fullPath));
                                 break;
                             }
                             case store::status::forbidden:
@@ -86,9 +95,12 @@ class Session final : public std::enable_shared_from_this<Session>
                             resp = network::Response(network::status::method_not_allowed);
                         }
 
-                        boost::asio::async_write(socket, resp.GetHTTPResponse(), yield);
+                        bool sendBody = req.GetMethod() == network::get;
+                        boost::asio::async_write(socket, resp.GetHTTPResponse(sendBody), yield);
                         BOOST_LOG_TRIVIAL(info) << "write '" << resp.GetStatusCode() << "' response to socket for method " 
-                                << req.GetMethod() << ", path: " << path;
+                                << req.GetMethod() << ", full path: " << fullPath;
+
+                        timer.cancel();
                     }
                     catch (const boost::system::system_error &e)
                     {
@@ -96,23 +108,23 @@ class Session final : public std::enable_shared_from_this<Session>
                         Stop();
                     }
                 }
-            }
-        );
+            });
 	}
 
     void Stop()
     {
         if (socket.is_open())
         {
-            boost::system::error_code ec;
-            socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-            socket.close(ec);
+            boost::system::error_code ignored;
+            socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored);
+            socket.close(ignored);
             BOOST_LOG_TRIVIAL(info) << "close socket";
         }
     }
 
  private:
  	boost::asio::strand<boost::asio::io_context::executor_type> strand;
+    boost::asio::steady_timer timer;
  	boost::asio::ip::tcp::socket socket;
 };
 
@@ -120,16 +132,13 @@ class Session final : public std::enable_shared_from_this<Session>
 
 StaticServer::StaticServer(const config::Settings& settings_) noexcept
 	: settings(settings_), fileStore(settings_.globalPath)
-{}
-
-StaticServer::~StaticServer()
 {
-	Stop();
 }
 
 int StaticServer::Start()
 {
-    boost::asio::spawn(ioContext, [&](boost::asio::yield_context yield) {
+    boost::asio::spawn(ioContext, [&](boost::asio::yield_context yield)
+    {
 
         boost::asio::ip::tcp::acceptor acceptor(ioContext, {boost::asio::ip::tcp::v4(), settings.port});
         boost::system::error_code ec;
@@ -147,7 +156,7 @@ int StaticServer::Start()
             acceptor.async_accept(socket, yield[ec]);
             if (!ec)
             {
-             	std::make_shared<Session>(ioContext, std::move(socket))->Start(fileStore);
+             	std::make_shared<Session>(ioContext, std::move(socket))->Start(fileStore, settings.sessionTimeoutMsec);
             }
             else
             {
@@ -158,7 +167,8 @@ int StaticServer::Start()
 
     for (size_t i = 0; i < settings.workersCount; ++i)
     {
-    	workers.emplace_back([this]() {
+    	workers.emplace_back([this]()
+        {
             try
             {
                 ioContext.run();
@@ -170,22 +180,22 @@ int StaticServer::Start()
         });
     }
 
-	BOOST_LOG_TRIVIAL(info) << "run stat server with " << settings.workersCount << " worker threads on port: " << settings.port;
-    while(!ioContext.stopped()) 
+    boost::asio::signal_set signals(ioContext, SIGINT, SIGTERM, SIGQUIT);
+    signals.async_wait([this](const boost::system::error_code &ec, int signalNum)
     {
-        //boost::asio::signal_set signals(ioContext, SIGINT, SIGTERM, SIGQUIT);
-        //signals.async_wait(boost::bind(&StaticServer::Stop, this));
-    }
+        if (!ec && !ioContext.stopped())
+        {
+            ioContext.stop();
+            BOOST_LOG_TRIVIAL(info) << "stoped static server by signal " << signalNum;
+        }
+    });
 
-	return EXIT_SUCCESS;
-}
+	BOOST_LOG_TRIVIAL(info) << "run stat server with " << settings.workersCount << " worker threads on port: " << settings.port;
 
-void StaticServer::Stop()
-{
-    ioContext.stop();
     for (auto &worker: workers)
     {
         worker.join();
     }
-    BOOST_LOG_TRIVIAL(info) << "stop static server";
+
+	return EXIT_SUCCESS;
 }

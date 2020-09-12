@@ -12,10 +12,10 @@ class StaticServer final
 {
 public:
 	explicit StaticServer(const config::Settings& settings_) noexcept;
-	~StaticServer();
+	~StaticServer() = default;
 
 	int Start();
-	void Stop();
+	void Stop(const boost::system::error_code& ec, int signalNum);
 
 private:
 	const config::Settings settings;

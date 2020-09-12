@@ -77,6 +77,7 @@ config::Settings::Settings(const std::string& configFileName) noexcept
         ("port", po::value<short unsigned int>(&port)->required(), "port on which the service is listening")
         ("workers_count", po::value<size_t>(&workersCount)->required(),"num worker threads")
         ("global_path", po::value<std::string>(&globalPath)->required(),"global path to file store")
+        ("session_timeout_msec", po::value<time_t>(&sessionTimeoutMsec)->required(),"session timeout msec")
         ("log_level", po::value<std::string>(&logLevel)->required(), "log level");
 
     po::variables_map vm;

@@ -59,16 +59,23 @@ std::string utils::GetTimeNow()
     return timeFormat.substr(0, timeFormat.size() - 1); // without /n
 }
 
-std::string utils::GetContentType(const std::string &fileType)
+std::string utils::GetContentType(const std::string &fullPath)
 {
+    size_t pos = fullPath.rfind('.');
+    std::string fileType = fullPath.substr(pos);
+
     std::string res;
     if (fileType == "html" || fileType == "css")
     {
         res = "text/" + fileType;
     }
-    else if (fileType == "gif" || fileType == "jpeg" || fileType == "jpg" || fileType == "png")
+    else if (fileType == "gif" || fileType == "jpeg" || fileType == "png")
     {
-        res = "image/" + fileType;   
+        res = "image/" + fileType;
+    }
+    else if (fileType == "jpg")
+    {
+        res = "image/jpeg";
     }
     else if (fileType == "js")
     {

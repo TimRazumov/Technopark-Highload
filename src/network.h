@@ -38,7 +38,7 @@ public:
 
     explicit Response(status code_, const std::string &body_ = {}, const std::string &contentType_ = {});
 
-    boost::asio::streambuf &GetHTTPResponse();
+    boost::asio::streambuf &GetHTTPResponse(bool withBody = true);
     status GetStatusCode();
 
 private:

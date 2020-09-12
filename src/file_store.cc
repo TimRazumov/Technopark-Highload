@@ -6,37 +6,46 @@ store::FileStore::FileStore(const std::string &globalPath_) : globalPath(globalP
 {
 }
 
-std::tuple<store::status, std::string, std::string> store::FileStore::Get(const std::string &path) noexcept
+std::string store::FileStore::GetFullPath(const std::string &localPath)
+{
+    std::string res(globalPath + localPath);
+    if (size_t pos = localPath.rfind('.'); pos == std::string::npos) // dir
+    {
+        if (localPath.back() != '/')
+        {
+            res += '/';
+        }
+        res += "index.html";
+    }
+    return res;
+}
+
+std::pair<store::status, std::string> store::FileStore::Get(const std::string &fullPath) noexcept
 {
     const std::lock_guard<std::mutex> guard(mutex); 
-    auto [fullPath, fileType] = GetFullPathAndFileType(path);
-    if (cache.find(fullPath) == cache.end())
+    if (auto it = cache.find(fullPath); it != cache.end())
+    {
+        return it->second;
+    }
+    
+    std::pair<store::status, std::string> res(store::status::ok, {});
+    if (fullPath.rfind("/etc") != std::string::npos || fullPath.rfind("/..") != std::string::npos)
+    {
+        res.first = store::status::forbidden;
+    }
+    else
     {
         std::ifstream file(fullPath);
         if (!file)
         {
-            cache.emplace(fullPath, std::make_tuple<store::status, std::string, std::string>(store::status::notFound, {}, {}));   
+            res.first = fullPath.rfind("/index.html") != std::string::npos ? store::status::forbidden : store::status::notFound;
         }
-        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        cache.emplace(fullPath, std::make_tuple<store::status, std::string, std::string>(store::status::ok, std::move(content), std::move(fileType)));
-    }
-    return cache[fullPath];
-}
-
-std::pair<std::string, std::string> store::FileStore::GetFullPathAndFileType(const std::string &localPath)
-{
-    std::pair<std::string, std::string> res(globalPath + localPath, "html");
-    if (size_t pos = localPath.rfind('.'); pos != std::string::npos) // file
-    {
-        res.second = localPath.substr(pos);
-    }
-    else // dir
-    {
-        if (localPath.back() != '/')
+        else
         {
-            res.first += '/';
+            res.second = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>()); // content
         }
-        res.first += "index.html";
     }
+    
+    cache.emplace(std::move(fullPath), res);
     return res;
 }

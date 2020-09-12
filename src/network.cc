@@ -33,7 +33,7 @@ network::Response &network::Response::operator=(network::Response&& resp_)
     return *this;
 }
 
-boost::asio::streambuf &network::Response::GetHTTPResponse()
+boost::asio::streambuf &network::Response::GetHTTPResponse(bool withBody)
 {
     std::iostream stream(&buffer);
     stream.clear();
@@ -48,7 +48,10 @@ boost::asio::streambuf &network::Response::GetHTTPResponse()
         stream << "Content-Type: " << contentType << httpEndl;
     }
     stream << httpEndl;
-    stream << body;
+    if (withBody) 
+    {
+        stream << body;
+    }
 
     return buffer;
 }

@@ -19,13 +19,15 @@ class FileStore
 {
 public:
     explicit FileStore(const std::string &globalPath_);
-    std::tuple<status, std::string, std::string> Get(const std::string &path) noexcept;
+
+    std::string GetFullPath(const std::string &localPath);
+    std::pair<status, std::string> Get(const std::string &fullPath) noexcept;
     
 private:
-    std::pair<std::string, std::string> GetFullPathAndFileType(const std::string &localPath);
+    
 
     const std::string globalPath;
-    std::map<std::string, std::tuple<status, std::string, std::string>> cache;
+    std::map<std::string, std::pair<status, std::string>> cache;
     std::mutex mutex;
 };
 
