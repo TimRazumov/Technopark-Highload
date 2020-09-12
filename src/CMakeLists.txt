@@ -19,6 +19,6 @@ target_link_libraries(${TARGET}
     Boost::program_options
     Boost::filesystem
     Boost::coroutine
-    Boost::log 
+    Boost::log
     Boost::log_setup
 )

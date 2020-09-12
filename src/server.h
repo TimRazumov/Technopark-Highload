@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.h"
+#include "file_store.h"
 
 #include <thread>
 #include <vector>
@@ -18,6 +19,7 @@ public:
 
 private:
 	const config::Settings settings;
+	store::FileStore fileStore;
 	boost::asio::io_context ioContext;
 	std::vector<std::thread> workers;
 };

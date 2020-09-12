@@ -76,6 +76,7 @@ config::Settings::Settings(const std::string& configFileName) noexcept
     desc.add_options()
         ("port", po::value<short unsigned int>(&port)->required(), "port on which the service is listening")
         ("workers_count", po::value<size_t>(&workersCount)->required(),"num worker threads")
+        ("global_path", po::value<std::string>(&globalPath)->required(),"global path to file store")
         ("log_level", po::value<std::string>(&logLevel)->required(), "log level");
 
     po::variables_map vm;

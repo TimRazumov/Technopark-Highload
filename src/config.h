@@ -16,6 +16,7 @@ struct Settings
 
 	short unsigned int port;
 	size_t workersCount;
+	std::string globalPath;
 };
 
 }
