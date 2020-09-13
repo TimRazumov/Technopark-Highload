@@ -24,8 +24,6 @@ public:
     std::pair<status, std::string> Get(const std::string &fullPath) noexcept;
     
 private:
-    
-
     const std::string globalPath;
     std::map<std::string, std::pair<status, std::string>> cache;
     std::mutex mutex;

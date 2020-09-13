@@ -61,10 +61,15 @@ std::string utils::GetTimeNow()
 
 std::string utils::GetContentType(const std::string &fullPath)
 {
-    size_t pos = fullPath.rfind('.');
-    std::string fileType = fullPath.substr(pos);
+    std::string res("application/unknown");
 
-    std::string res;
+    size_t pos = fullPath.rfind('.');
+    if (pos == std::string::npos || pos == fullPath.size() - 1)
+    {
+        return res;
+    }
+    std::string fileType = fullPath.substr(pos + 1);
+
     if (fileType == "html" || fileType == "css")
     {
         res = "text/" + fileType;
@@ -84,10 +89,6 @@ std::string utils::GetContentType(const std::string &fullPath)
     else if (fileType == "swf")
     {
         res  = "application/x-shockwave-flash";
-    }
-    else
-    {
-        res = "application/unknown";
     }
     return res;
 }
