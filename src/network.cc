@@ -25,7 +25,7 @@ network::Response::Response(status code_, const std::string &body_, const std::s
 {
 }
 
-network::Response &network::Response::operator=(network::Response&& resp_)
+network::Response &network::Response::operator=(network::Response &&resp_)
 {
     this->code = resp_.code;
     this->body = std::move(resp_.body);
@@ -49,7 +49,7 @@ boost::asio::streambuf &network::Response::GetHTTPResponse(bool withBody)
         stream << "Content-Type: " << contentType << httpEndl;
     }
     stream << httpEndl;
-    if (withBody) 
+    if (withBody)
     {
         stream << body;
     }

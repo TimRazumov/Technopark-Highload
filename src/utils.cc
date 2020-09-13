@@ -3,7 +3,7 @@
 #include <ctime>
 #include <sstream>
 
-std::string utils::MakePathByUrl(const std::string& url)
+std::string utils::MakePathByUrl(const std::string &url)
 {
     std::string decodedUrl = utils::DecodeUrl(url);
     size_t pos = decodedUrl.find('?');
@@ -11,10 +11,10 @@ std::string utils::MakePathByUrl(const std::string& url)
     {
         return decodedUrl.substr(0, pos);
     }
-    return  decodedUrl;
+    return decodedUrl;
 }
 
-std::string utils::DecodeUrl(const std::string& url)
+std::string utils::DecodeUrl(const std::string &url)
 {
     std::string res;
     for (size_t i = 0; i < url.size(); ++i)
@@ -56,7 +56,7 @@ std::string utils::GetTimeNow()
 {
     time_t time = std::time(nullptr);
     std::string timeFormat = std::ctime(&time);
-    return timeFormat.substr(0, timeFormat.size() - 1); // without /n
+    return timeFormat.substr(0, timeFormat.size() - 1);  // without /n
 }
 
 std::string utils::GetContentType(const std::string &fullPath)
@@ -84,11 +84,11 @@ std::string utils::GetContentType(const std::string &fullPath)
     }
     else if (fileType == "js")
     {
-        res  = "application/javascript";
+        res = "application/javascript";
     }
     else if (fileType == "swf")
     {
-        res  = "application/x-shockwave-flash";
+        res = "application/x-shockwave-flash";
     }
     return res;
 }

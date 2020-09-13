@@ -4,20 +4,19 @@
 
 #include <boost/log/trivial.hpp>
 
-namespace config 
+namespace config
 {
-
 std::string parseCommandLineForConfigFile(int argc, char *argv[]);
 void setLogLevel(const std::string &logLevelStr);
 
 struct Settings
 {
-	explicit Settings(const std::string& configFileName) noexcept;
+    explicit Settings(const std::string &configFileName) noexcept;
 
-	short unsigned int port;
-	size_t workersCount;
-	time_t sessionTimeoutMsec;
-	std::string globalPath;
+    short unsigned int port;
+    size_t workersCount;
+    time_t sessionTimeoutMsec;
+    std::string globalPath;
 };
 
-}
+}  // namespace config

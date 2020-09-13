@@ -1,15 +1,14 @@
 #pragma once
 
+#include <ctime>
 #include <iostream>
 #include <string>
-#include <ctime>
 
-#include <boost/beast/http/status.hpp>
 #include <boost/asio/streambuf.hpp>
+#include <boost/beast/http/status.hpp>
 
 namespace network
 {
-
 const static std::string get = "GET";
 const static std::string head = "HEAD";
 
@@ -34,9 +33,10 @@ class Response
 {
 public:
     Response() = default;
-    Response &operator=(Response&&);
+    Response &operator=(Response &&);
 
-    explicit Response(status code_, const std::string &body_ = {}, const std::string &contentType_ = {});
+    explicit Response(
+        status code_, const std::string &body_ = {}, const std::string &contentType_ = {});
 
     boost::asio::streambuf &GetHTTPResponse(bool withBody = true);
     status GetStatusCode();
@@ -48,4 +48,4 @@ private:
     boost::asio::streambuf buffer;
 };
 
-} // network
+}  // namespace network

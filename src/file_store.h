@@ -1,13 +1,12 @@
 #pragma once
 
-#include <string>
-#include <tuple>
 #include <map>
 #include <mutex>
+#include <string>
+#include <tuple>
 
 namespace store
 {
-
 enum class status
 {
     ok,
@@ -22,11 +21,11 @@ public:
 
     std::string GetFullPath(const std::string &localPath);
     std::pair<status, std::string> Get(const std::string &fullPath) noexcept;
-    
+
 private:
     const std::string globalPath;
     std::map<std::string, std::pair<status, std::string>> cache;
     std::mutex mutex;
 };
 
-}
+}  // namespace store

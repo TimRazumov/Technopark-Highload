@@ -11,15 +11,15 @@
 class StaticServer final
 {
 public:
-	explicit StaticServer(const config::Settings& settings_) noexcept;
-	~StaticServer() = default;
+    explicit StaticServer(const config::Settings &settings_) noexcept;
+    ~StaticServer() = default;
 
-	int Start();
-	void Stop(const boost::system::error_code& ec, int signalNum);
+    int Start();
+    void Stop(const boost::system::error_code &ec, int signalNum);
 
 private:
-	const config::Settings settings;
-	store::FileStore fileStore;
-	boost::asio::io_context ioContext;
-	std::vector<std::thread> workers;
+    const config::Settings settings;
+    store::FileStore fileStore;
+    boost::asio::io_context ioContext;
+    std::vector<std::thread> workers;
 };
