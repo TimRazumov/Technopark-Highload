@@ -41,6 +41,7 @@ boost::asio::streambuf &network::Response::GetHTTPResponse(bool withBody)
     stream << "HTTP/1.1 " << static_cast<size_t>(code) << " " << code << httpEndl;
     stream << "Server: Highload Static Server" << httpEndl;
     stream << "Date: " << utils::GetTimeNow() << httpEndl;
+    // stream << "Connection: Keep-Alive" << httpEndl;
     stream << "Connection: Close" << httpEndl;
     if (!contentType.empty() || !body.empty())
     {

@@ -1,20 +1,21 @@
 FROM ubuntu:18.04
 
-RUN apt-get update; \
-    apt-get install -y software-properties-common; \
-    add-apt-repository ppa:apt-fast/stable; \
-    apt-get -y install apt-fast;
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends apt-utils
 
-RUN apt-fast install -y git cmake gcc-8 g++-8 libboost-all-dev; \
-    update-alternatives --remove-all gcc; \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 80 --slave /usr/bin/g++ g++ /usr/bin/g++-8;
+RUN apt-get -y install python3-pip
+RUN pip3 install cmake
+RUN apt-get -y install g++
+
+RUN apt-get -y install wget
+RUN apt-get -y install tar
+RUN wget -O boost_1_74_0.tar.gz http://sourceforge.net/projects/boost/files/boost/1.74.0/boost_1_74_0.tar.gz/download
+RUN tar -xzvf boost_1_74_0.tar.gz && cd boost_1_74_0 && ./bootstrap.sh && ./b2 install
 
 COPY . .
 
-WORKDIR /build
-
-RUN cmake .. && make -j4
+RUN rm -rf build && mkdir build && cd build && cmake .. && make -j4 && cd ..
 
 EXPOSE 80
 
-CMD ./bin/static_server -c ../files/static_server.conf
+CMD ./build/bin/static_server --config files/static_server.conf
