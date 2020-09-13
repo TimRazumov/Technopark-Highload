@@ -45,11 +45,11 @@ class Session final : public std::enable_shared_from_this<Session>
         boost::asio::spawn(strand, 
             [this, self = shared_from_this(), remote, sessionTimeoutMsec, &fileStore] (auto yield) 
             {
-                while (socket.is_open())
-                {
+                //while (socket.is_open())
+                //{
                     try
                     {
-                        timer.expires_from_now(std::chrono::milliseconds(sessionTimeoutMsec));
+                        /*timer.expires_from_now(std::chrono::milliseconds(sessionTimeoutMsec));
                         timer.async_wait([this, self](auto ec) 
                         {
                             if (!ec)
@@ -57,7 +57,7 @@ class Session final : public std::enable_shared_from_this<Session>
                                 boost::system::error_code ignored;
                                 socket.cancel(ignored);
                             }
-                        });
+                        });*/
 
                         boost::asio::streambuf buffer;
                         boost::asio::async_read_until(socket, buffer, network::httpEndl, yield);
@@ -100,14 +100,14 @@ class Session final : public std::enable_shared_from_this<Session>
                         BOOST_LOG_TRIVIAL(info) << "write '" << resp.GetStatusCode() << "' response to socket for method " 
                                 << req.GetMethod() << ", full path: " << fullPath;
 
-                        timer.cancel();
+                        // timer.cancel();
                     }
                     catch (const boost::system::system_error &e)
                     {
                         BOOST_LOG_TRIVIAL(error) << "remote: " << remote << ", error: " << e.what() << ", errno: " << e.code().value();
                         Stop();
                     }
-                }
+                //}
             });
 	}
 
