@@ -30,8 +30,8 @@ func main() {
 	router.GET("/api",
 		func(ctx echo.Context) error {
 			defer hitsTotal.Inc()
-			i := time.Duration(rand.Intn(5))
-			time.Sleep(i * time.Second)
+			i := time.Duration(rand.Intn(100))
+			time.Sleep(i * time.Millisecond)
 			return ctx.String(http.StatusOK, "hello")
 		},
 	)
